@@ -32,7 +32,8 @@ class SurrogateWorker(Worker):
             'loss': 1-test_acc, # remember: HpBandSter always minimizes!
             'info': {    'test accuracy': test_acc,
                         'elapsed time' : elapsed_time,
-                        'number of parameters': num_params
+                        'number of parameters': num_params,
+						'hyperparams' : hpv.tolist(),
                     }
         })
 
