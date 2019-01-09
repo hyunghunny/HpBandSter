@@ -38,6 +38,8 @@ args=parser.parse_args()
 
 if args.backend == 'pytorch':
 	from example_5_pytorch_worker import PyTorchWorker as worker
+elif args.backend == 'surrogate':
+    from example_5_surrogate_worker import SurrogateWorker as worker	
 else:
 	from example_5_keras_worker import KerasWorker as worker
 
