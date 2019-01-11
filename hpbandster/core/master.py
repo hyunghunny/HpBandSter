@@ -278,7 +278,7 @@ class Master(object):
 				self.logger.debug('HBMASTER: running jobs: %i, queue sizes: %s -> wait'%(self.num_running_jobs, str(self.job_queue_sizes)))
 				self.thread_cond.wait()
 
-	def _submit_job(self, config_id, config, budget):
+	def _submit_job(self, config_id, config, budget, lookup_index):
 		"""
 		hidden function to submit a new job to the dispatcher
 
@@ -288,7 +288,7 @@ class Master(object):
 		self.logger.debug('HBMASTER: trying submitting job %s to dispatcher'%str(config_id))
 		with self.thread_cond:
 			self.logger.debug('HBMASTER: submitting job %s to dispatcher'%str(config_id))
-			self.dispatcher.submit_job(config_id, config=config, budget=budget, working_directory=self.working_directory)
+			self.dispatcher.submit_job(config_id, config=config, budget=budget, working_directory=self.working_directory, lookup_index=lookup_index)
 			self.num_running_jobs += 1
 
 		#shouldn't the next line be executed while holding the condition?

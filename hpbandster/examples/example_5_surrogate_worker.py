@@ -19,13 +19,15 @@ class SurrogateWorker(Worker):
     def compute(self, config, budget, working_directory, *args, **kwargs):
         num_epochs = budget
         num_params = self.lookup.num_hyperparams
+        target_lookup_index = kwargs["lookup_index"]["lookup_index"]
         
         # Find the approximated configuration index here
-        matcher = SurrogateMatcher(self.lookup)
-        hpv, near_index = matcher.find_nearest(config)
+        # matcher = SurrogateMatcher(self.lookup)
+        hpv = self.lookup.get_hyperparam_vectors()[target_lookup_index]
+        # near_index = target_lookup_index
         
-        test_accs = self.lookup.get_test_errors(num_epochs)[near_index]
-        elapsed_time = self.lookup.get_elapsed_times(num_epochs)[near_index]
+        test_acc = self.lookup.get_test_errors(num_epochs)[target_lookup_index]
+        elapsed_time = self.lookup.get_elapsed_times(num_epochs)[target_lookup_index]
 
         #import IPython; IPython.embed()
         return ({

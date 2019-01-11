@@ -13,6 +13,8 @@ import statsmodels.api as sm
 
 from hpbandster.core.base_config_generator import base_config_generator
 
+from lookup import *
+
 
 class BOHB(base_config_generator):
 	def __init__(self, configspace, min_points_in_model = None,
@@ -78,7 +80,11 @@ class BOHB(base_config_generator):
 			else:
 				self.kde_vartypes += 'c'
 				self.vartypes +=[0]
-		
+
+		###################################################################################### added by EJ
+		self.lookup = load('data2', data_folder='./lookup/')
+		self.used_lookup_index = []
+
 		self.vartypes = np.array(self.vartypes, dtype=int)
 
 		# store precomputed probs for the categorical parameters
@@ -89,6 +95,9 @@ class BOHB(base_config_generator):
 		self.losses = dict()
 		self.good_config_rankings = dict()
 		self.kde_models = dict()
+
+		## added by EJ
+		self.configs_lookup_index = dict()
 
 
 	def largest_budget_with_model(self):
@@ -118,15 +127,33 @@ class BOHB(base_config_generator):
 
 		sample = None
 		info_dict = {}
-		
+
 		# If no model is available, sample from prior
 		# also mix in a fraction of random configs
 		if len(self.kde_models.keys()) == 0 or np.random.rand() < self.random_fraction:
 			sample =  self.configspace.sample_configuration()
+			random_index = np.random.randint(0, len(self.lookup.get_hyperparam_vectors()))
+			while random_index in self.used_lookup_index:
+				random_index = np.random.randint(0, len(self.lookup.get_hyperparam_vectors()))
+			self.used_lookup_index.append(random_index)
+			temp = self.lookup.get_hyperparam_vectors()[random_index]
+			sample._values['c1_depth'] = int(temp[self.lookup.hp_config.param_order.index('c1_depth')])
+			sample._values['c2_depth'] = int(temp[self.lookup.hp_config.param_order.index('c2_depth')])
+			sample._values['f1_width'] = int(temp[self.lookup.hp_config.param_order.index('f1_width')])
+			sample._values['keep_prop_rate'] = temp[self.lookup.hp_config.param_order.index('keep_prop_rate')]
+			sample._values['learning_rate'] = temp[self.lookup.hp_config.param_order.index('learning_rate')]
+			sample._values['p1_size'] = int(temp[self.lookup.hp_config.param_order.index('p1_size')])
+			sample._values['p2_size'] = int(temp[self.lookup.hp_config.param_order.index('p2_size')])
+			sample._values['reg_param'] = temp[self.lookup.hp_config.param_order.index('reg_param')]
+			sample._values['window_size'] = int(temp[self.lookup.hp_config.param_order.index('window_size')])
+			sample._vector = None
+
 			info_dict['model_based_pick'] = False
+			info_dict['lookup_index'] = random_index
 
 		best = np.inf
 		best_vector = None
+		best_vector_lookup_index = None
 
 		if sample is None:
 			try:
@@ -146,7 +173,8 @@ class BOHB(base_config_generator):
 					idx = np.random.randint(0, len(kde_good.data))
 					datum = kde_good.data[idx]
 					vector = []
-					
+					datum_lookup_index = kde_good.lookup_index[idx]
+
 					for m,bw,t in zip(datum, kde_good.bw, self.vartypes):
 						
 						bw = max(bw, self.min_bandwidth)
@@ -162,7 +190,8 @@ class BOHB(base_config_generator):
 							if np.random.rand() < (1-bw):
 								vector.append(int(m))
 							else:
-								vector.append(np.random.randint(t))
+								random_t = np.random.randint(t)
+								vector.append(random_t)
 					val = minimize_me(vector)
 
 					if not np.isfinite(val):
@@ -177,16 +206,36 @@ class BOHB(base_config_generator):
 						# if the good_kde has a finite value, i.e. there is no config with that value in the bad kde, so it shouldn't be terrible.
 						if np.isfinite(l(vector)):
 							best_vector = vector
+							best_vector_lookup_index = datum_lookup_index
 							break
 
 					if val < best:
 						best = val
 						best_vector = vector
+						best_vector_lookup_index = datum_lookup_index
+						print('################', idx)
 
 				if best_vector is None:
 					self.logger.debug("Sampling based optimization with %i samples failed -> using random configuration"%self.num_samples)
-					sample = self.configspace.sample_configuration().get_dictionary()
-					info_dict['model_based_pick']  = False
+					sample = self.configspace.sample_configuration()
+					random_index = np.random.randint(0, len(self.lookup.get_hyperparam_vectors()))
+					while random_index in self.used_lookup_index:
+						random_index = np.random.randint(0, len(self.lookup.get_hyperparam_vectors()))
+					self.used_lookup_index.append(random_index)
+					temp = self.lookup.get_hyperparam_vectors()[random_index]
+					sample._values['c1_depth'] = int(temp[self.lookup.hp_config.param_order.index('c1_depth')])
+					sample._values['c2_depth'] = int(temp[self.lookup.hp_config.param_order.index('c2_depth')])
+					sample._values['f1_width'] = int(temp[self.lookup.hp_config.param_order.index('f1_width')])
+					sample._values['keep_prop_rate'] = temp[self.lookup.hp_config.param_order.index('keep_prop_rate')]
+					sample._values['learning_rate'] = temp[self.lookup.hp_config.param_order.index('learning_rate')]
+					sample._values['p1_size'] = int(temp[self.lookup.hp_config.param_order.index('p1_size')])
+					sample._values['p2_size'] = int(temp[self.lookup.hp_config.param_order.index('p2_size')])
+					sample._values['reg_param'] = temp[self.lookup.hp_config.param_order.index('reg_param')]
+					sample._values['window_size'] = int(temp[self.lookup.hp_config.param_order.index('window_size')])
+					sample._vector = None
+
+					info_dict['model_based_pick'] = False
+					info_dict['lookup_index'] = random_index
 				else:
 					self.logger.debug('best_vector: {}, {}, {}, {}'.format(best_vector, best, l(best_vector), g(best_vector)))
 					for i, hp_value in enumerate(best_vector):
@@ -198,13 +247,18 @@ class BOHB(base_config_generator):
 						):
 							best_vector[i] = int(np.rint(best_vector[i]))
 					sample = ConfigSpace.Configuration(self.configspace, vector=best_vector).get_dictionary()
-					
+
+					print(best_vector)
+					print(best_vector_lookup_index)
+					print('###', sample)
 					try:
 						sample = ConfigSpace.util.deactivate_inactive_hyperparameters(
 									configuration_space=self.configspace,
 									configuration=sample
 									)
+						print('###2', sample)
 						info_dict['model_based_pick'] = True
+						info_dict['lookup_index'] = random_index
 
 					except Exception as e:
 						self.logger.warning(("="*50 + "\n")*3 +\
@@ -294,6 +348,7 @@ class BOHB(base_config_generator):
 		if budget not in self.configs.keys():
 			self.configs[budget] = []
 			self.losses[budget] = []
+			self.configs_lookup_index[budget] = []
 
 		# skip model building if we already have a bigger model
 		if max(list(self.kde_models.keys()) + [-np.inf]) > budget:
@@ -302,8 +357,11 @@ class BOHB(base_config_generator):
 		# We want to get a numerical representation of the configuration in the original space
 
 		conf = ConfigSpace.Configuration(self.configspace, job.kwargs["config"])
+		conf_lookup_index = job.kwargs["lookup_index"]["lookup_index"]
+		# conf._vector["lookup_index"] = conf_lookup_index
 		self.configs[budget].append(conf.get_array())
 		self.losses[budget].append(loss)
+		self.configs_lookup_index[budget].append(conf_lookup_index)
 
 		
 		# skip model building:
@@ -318,16 +376,20 @@ class BOHB(base_config_generator):
 
 		train_configs = np.array(self.configs[budget])
 		train_losses =  np.array(self.losses[budget])
+		train_lookup_indices = np.array(self.configs_lookup_index[budget])
 
 		n_good= max(self.min_points_in_model, (self.top_n_percent * train_configs.shape[0])//100 )
 		#n_bad = min(max(self.min_points_in_model, ((100-self.top_n_percent)*train_configs.shape[0])//100), 10)
-		n_bad = max(self.min_points_in_model, ((100-self.top_n_percent)*train_configs.shape[0])//100)
+		n_bad = max(self.min_points_in_model, ((100-self.top_n_percent)*train_configs.shape[0])//100) ## top n percent : 15
 
 		# Refit KDE for the current budget
 		idx = np.argsort(train_losses)
 
 		train_data_good = self.impute_conditional_data(train_configs[idx[:n_good]])
 		train_data_bad  = self.impute_conditional_data(train_configs[idx[n_good:n_good+n_bad]])
+
+		train_data_good_lookup_index = train_lookup_indices[idx[:n_good]]
+		train_data_bad_lookup_index = train_lookup_indices[idx[n_good:n_good+n_bad]]
 
 		if train_data_good.shape[0] <= train_data_good.shape[1]:
 			return
@@ -340,8 +402,8 @@ class BOHB(base_config_generator):
 		# quick rule of thumb
 		bw_estimation = 'normal_reference'
 
-		bad_kde = sm.nonparametric.KDEMultivariate(data=train_data_bad,  var_type=self.kde_vartypes, bw=bw_estimation)
-		good_kde = sm.nonparametric.KDEMultivariate(data=train_data_good, var_type=self.kde_vartypes, bw=bw_estimation)
+		bad_kde = sm.nonparametric.KDEMultivariate(data=train_data_bad,  var_type=self.kde_vartypes, lookup_index=train_data_bad_lookup_index, bw=bw_estimation) ## need to add argument of lookup_index
+		good_kde = sm.nonparametric.KDEMultivariate(data=train_data_good, var_type=self.kde_vartypes, lookup_index=train_data_good_lookup_index, bw=bw_estimation)
 
 		bad_kde.bw = np.clip(bad_kde.bw, self.min_bandwidth,None)
 		good_kde.bw = np.clip(good_kde.bw, self.min_bandwidth,None)

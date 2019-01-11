@@ -55,8 +55,8 @@ class LookupDataLoader(object):
         start_index = self.begin_index + self.num_hyperparams
         if end_epoch is None or end_epoch > self.num_epochs:            
             end_epoch = self.num_epochs
-        end_index = start_index + end_epoch 
-        accs = self.data.ix[:, start_index:end_index]  # accuracy at each epoch
+        end_index = int(start_index + end_epoch)
+        accs = self.data.ix[:, start_index:end_index].values  # accuracy at each epoch
 
         if hasattr(self.hp_config, 'metric'):
             if self.hp_config.metric == 'perplexity':
@@ -74,7 +74,7 @@ class LookupDataLoader(object):
             if end_epoch > 0 and end_epoch <= self.num_epochs:
                 test_error_index = end_epoch - 1
 
-        fin_vals = sorted_vals[:, test_error_index]  # accuracy when training finished
+        fin_vals = sorted_vals[:, -1]  # accuracy when training finished
         fin_loss = 1 - fin_vals  # final error
         return fin_loss
 
@@ -82,8 +82,8 @@ class LookupDataLoader(object):
 
         if end_epoch is None or end_epoch > self.num_epochs:
             end_epoch = self.num_epochs        
-        time_col_index = self.begin_index + self.num_hyperparams + end_epoch  #25
-        dur = self.data.ix[:, time_col_index].values  # elapsed time
+        time_col_index = 25
+        dur = (self.data.ix[:, time_col_index].values)/15*end_epoch
         return dur
 
     def get_sobol_grid(self): 

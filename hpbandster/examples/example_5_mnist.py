@@ -31,7 +31,7 @@ parser.add_argument('--worker', help='Flag to turn this into a worker process', 
 parser.add_argument('--run_id', type=str, help='A unique run id for this optimization run. An easy option is to use the job id of the clusters scheduler.')
 parser.add_argument('--nic_name',type=str, help='Which network interface to use for communication.', default='lo')
 parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='.')
-parser.add_argument('--backend',help='Toggles which worker is used. Choose between a pytorch and a keras implementation.', choices=['pytorch', 'keras'], default='keras')
+parser.add_argument('--backend',help='Toggles which worker is used. Choose between a pytorch and a keras implementation.', choices=['pytorch', 'keras'], default='surrogate')
 
 args=parser.parse_args()
 
@@ -62,7 +62,7 @@ if args.worker:
 # interesting. The core.result submodule contains the functionality to
 # read the two generated files (results.json and configs.json) and
 # create a Result object.
-result_logger = hpres.json_result_logger(directory=args.shared_directory, overwrite=False)
+result_logger = hpres.json_result_logger(directory=args.shared_directory, overwrite=True)
 
 
 # Start a nameserver:
