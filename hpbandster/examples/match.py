@@ -46,7 +46,7 @@ class SurrogateMatcher(object):
             ratings.append(c["rating"])
         
         max_index = np.argmax(ratings)
-        return candidates[max_index]["hyperparam"],
+        return candidates[max_index]["hyperparam"], max_index
 
 
 if __name__ == "__main__":

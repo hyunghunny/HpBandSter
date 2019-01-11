@@ -13,6 +13,7 @@ import statsmodels.api as sm
 
 from hpbandster.core.base_config_generator import base_config_generator
 
+from match import SurrogateMatcher
 from lookup import *
 
 
@@ -153,7 +154,6 @@ class BOHB(base_config_generator):
 
 		best = np.inf
 		best_vector = None
-		best_vector_lookup_index = None
 
 		if sample is None:
 			try:
@@ -206,14 +206,11 @@ class BOHB(base_config_generator):
 						# if the good_kde has a finite value, i.e. there is no config with that value in the bad kde, so it shouldn't be terrible.
 						if np.isfinite(l(vector)):
 							best_vector = vector
-							best_vector_lookup_index = datum_lookup_index
 							break
 
 					if val < best:
 						best = val
 						best_vector = vector
-						best_vector_lookup_index = datum_lookup_index
-						print('################', idx)
 
 				if best_vector is None:
 					self.logger.debug("Sampling based optimization with %i samples failed -> using random configuration"%self.num_samples)
@@ -247,18 +244,13 @@ class BOHB(base_config_generator):
 						):
 							best_vector[i] = int(np.rint(best_vector[i]))
 					sample = ConfigSpace.Configuration(self.configspace, vector=best_vector).get_dictionary()
-
-					print(best_vector)
-					print(best_vector_lookup_index)
-					print('###', sample)
 					try:
 						sample = ConfigSpace.util.deactivate_inactive_hyperparameters(
 									configuration_space=self.configspace,
 									configuration=sample
 									)
-						print('###2', sample)
 						info_dict['model_based_pick'] = True
-						info_dict['lookup_index'] = random_index
+						# info_dict['lookup_index'] = random_index
 
 					except Exception as e:
 						self.logger.warning(("="*50 + "\n")*3 +\
@@ -335,6 +327,7 @@ class BOHB(base_config_generator):
 		"""
 
 		super().new_result(job)
+		matcher = SurrogateMatcher(self.lookup)
 
 		if job.result is None:
 			# One could skip crashed results, but we decided 
@@ -357,9 +350,13 @@ class BOHB(base_config_generator):
 		# We want to get a numerical representation of the configuration in the original space
 
 		conf = ConfigSpace.Configuration(self.configspace, job.kwargs["config"])
-		conf_lookup_index = job.kwargs["lookup_index"]["lookup_index"]
-		# conf._vector["lookup_index"] = conf_lookup_index
-		self.configs[budget].append(conf.get_array())
+		try:
+			conf_lookup_index = job.kwargs["lookup_index"]["lookup_index"]
+			self.configs[budget].append(conf.get_array())
+		except:
+			hpv, conf_lookup_index = matcher.find_nearest(conf)
+			self.configs[budget].append(hpv)
+		# self.configs[budget].append(conf.get_array())
 		self.losses[budget].append(loss)
 		self.configs_lookup_index[budget].append(conf_lookup_index)
 
