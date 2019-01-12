@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from lookup import *
-from match import SurrogateMatcher
+from match import Data2SurrogateMatcher
 
 class SurrogateWorker(Worker):
     def __init__(self, N_train=8192, N_valid=1024, **kwargs):
@@ -21,8 +21,11 @@ class SurrogateWorker(Worker):
         num_params = self.lookup.num_hyperparams
 
         # Find the approximated configuration index here
-        matcher = SurrogateMatcher(self.lookup)
-
+        matcher = Data2SurrogateMatcher(self.lookup)
+        # XXX:hard coding for data2
+        param_orders = ["c1_depth", "p1_size", "c2_depth",
+        "p2_size", "f1_width", "window_size",
+        "learning_rate", "reg_param", "keep_prop_rate"]
         try:
             target_lookup_index = kwargs["lookup_index"]["lookup_index"]
             hpv = self.lookup.get_hyperparam_vectors()[target_lookup_index]
@@ -31,14 +34,20 @@ class SurrogateWorker(Worker):
 
         test_acc = self.lookup.get_test_errors(num_epochs)[target_lookup_index]
         elapsed_time = self.lookup.get_elapsed_times(num_epochs)[target_lookup_index]
+        hpv_dict = {}
+        hpv_list = hpv.tolist()
+        for i in range(len(hpv_list)):
+            val = hpv_list[i]
+            key = param_orders[i]
+            hpv_dict[key] = val
 
         #import IPython; IPython.embed()
         return ({
             'loss': 1-test_acc, # remember: HpBandSter always minimizes!
-            'info': {    'test accuracy': test_acc,
+            'info': {
+                        'test accuracy': test_acc,
                         'elapsed time' : elapsed_time,
-                        'number of parameters': num_params,
-						'hyperparams' : hpv.tolist(),
+						'hyperparams' : hpv_dict,
                     }
         })
 

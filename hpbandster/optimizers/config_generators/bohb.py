@@ -13,7 +13,7 @@ import statsmodels.api as sm
 
 from hpbandster.core.base_config_generator import base_config_generator
 
-from match import SurrogateMatcher
+from match import Data2SurrogateMatcher
 from lookup import *
 
 
@@ -173,7 +173,8 @@ class BOHB(base_config_generator):
 					idx = np.random.randint(0, len(kde_good.data))
 					datum = kde_good.data[idx]
 					vector = []
-					datum_lookup_index = kde_good.lookup_index[idx]
+					# XXX: remove unreferenced variable to avoid exception
+					#datum_lookup_index = kde_good.lookup_index[idx]
 
 					for m,bw,t in zip(datum, kde_good.bw, self.vartypes):
 						
@@ -327,7 +328,7 @@ class BOHB(base_config_generator):
 		"""
 
 		super().new_result(job)
-		matcher = SurrogateMatcher(self.lookup)
+		matcher = Data2SurrogateMatcher(self.lookup)
 
 		if job.result is None:
 			# One could skip crashed results, but we decided 
@@ -399,8 +400,12 @@ class BOHB(base_config_generator):
 		# quick rule of thumb
 		bw_estimation = 'normal_reference'
 
-		bad_kde = sm.nonparametric.KDEMultivariate(data=train_data_bad,  var_type=self.kde_vartypes, lookup_index=train_data_bad_lookup_index, bw=bw_estimation) ## need to add argument of lookup_index
-		good_kde = sm.nonparametric.KDEMultivariate(data=train_data_good, var_type=self.kde_vartypes, lookup_index=train_data_good_lookup_index, bw=bw_estimation)
+		# XXX: referenced package files are modified. lookup_index is not the original argument of KDEMultivariate. So, I can not make regression due to below changes
+		#bad_kde = sm.nonparametric.KDEMultivariate(data=train_data_bad,  var_type=self.kde_vartypes, lookup_index=train_data_bad_lookup_index, bw=bw_estimation) ## need to add argument of lookup_index
+		#good_kde = sm.nonparametric.KDEMultivariate(data=train_data_good, var_type=self.kde_vartypes, lookup_index=train_data_good_lookup_index, bw=bw_estimation)
+		bad_kde = sm.nonparametric.KDEMultivariate(data=train_data_bad,  var_type=self.kde_vartypes, bw=bw_estimation) ## need to add argument of lookup_index
+		good_kde = sm.nonparametric.KDEMultivariate(data=train_data_good, var_type=self.kde_vartypes, bw=bw_estimation)
+
 
 		bad_kde.bw = np.clip(bad_kde.bw, self.min_bandwidth,None)
 		good_kde.bw = np.clip(good_kde.bw, self.min_bandwidth,None)

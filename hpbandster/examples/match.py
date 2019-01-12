@@ -1,7 +1,7 @@
 import lookup as surrogate
 import numpy as np
 
-class SurrogateMatcher(object):
+class Data2SurrogateMatcher(object):
     def __init__(self, lookup):
         self.lookup = lookup
 
@@ -9,20 +9,17 @@ class SurrogateMatcher(object):
         candidates = []
         
         hpvs = self.lookup.get_hyperparam_vectors()
-        # XXX:hard coding for data2
-        param_orders = ["c1_depth", "p1_size", "c2_depth", 
-        "p2_size", "f1_width", "window_size",
-        "learning_rate", "reg_param", "keep_prop_rate"] 
+
         
         for i in range(len(hpvs)):
             match_count = 0
             hpv = hpvs[i]
             # integer value may match exactly
-            if abs(hpv[0] - config['c1_depth']) < 50:
+            if abs(hpv[0] - config['c1_depth']) < 20:
                 match_count += 1
-            if abs(hpv[2] - config['c2_depth']) < 50:
+            if abs(hpv[2] - config['c2_depth']) < 20:
                 match_count += 1            
-            if abs(hpv[4] - config['f1_width']) < 100:
+            if abs(hpv[4] - config['f1_width']) < 50:
                 match_count += 1
             if hpv[5] == config['window_size']:
                 match_count += 1
