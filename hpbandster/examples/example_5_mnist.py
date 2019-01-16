@@ -32,7 +32,7 @@ parser.add_argument('--run_id', type=str, help='A unique run id for this optimiz
 parser.add_argument('--nic_name',type=str, help='Which network interface to use for communication.', default='lo')
 parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='./data2-100-0-0')
 parser.add_argument('--backend',help='Toggles which worker is used. Choose between a pytorch and a keras implementation.', choices=['pytorch', 'keras', 'surrogate'], default='keras')
-parser.add_argument('--gpu_id',   type=float, help='GPU machine id for training.',    default=0)
+parser.add_argument('--gpu_id',   type=float, help='GPU machine id for training.',    default=3)
 args=parser.parse_args()
 
 

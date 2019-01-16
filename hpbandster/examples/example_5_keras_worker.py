@@ -160,13 +160,13 @@ class KerasWorker(Worker):
             model.add(Conv2D(int(config['c1_depth']), kernel_size=(int(config['window_size']),int(config['window_size'])),
                              activation='relu',
                              input_shape=self.input_shape))
-            model.add(MaxPooling2D(pool_size=(int(config['p1_size']), int(config['p1_size']))))
+            model.add(MaxPooling2D(pool_size=(int(config['p1_size']), int(config['p1_size'])), padding='same'))
 
 
             model.add(Conv2D(config['c2_depth'], kernel_size=(int(config['window_size']),int(config['window_size'])),
                              activation='relu',
                              input_shape=self.input_shape))
-            model.add(MaxPooling2D(pool_size=(int(config['p2_size']), int(config['p2_size']))))
+            model.add(MaxPooling2D(pool_size=(int(config['p2_size']), int(config['p2_size'])), padding='same'))
 
 
 
@@ -200,7 +200,7 @@ class KerasWorker(Worker):
                 'loss': 1-val_score[1], # remember: HpBandSter always minimizes!
                 'info': {	'test accuracy': test_score[1],
                             'elapsed time': time.time() - start_time,
-                          n  'train accuracy': train_score[1],
+                            'train accuracy': train_score[1],
                             'validation accuracy': val_score[1],
                             'number of parameters': model.count_params(),
                         }
