@@ -32,22 +32,26 @@ class SurrogateWorker(Worker):
         except:
             hpv, target_lookup_index = matcher.find_nearest(config)
 
-        test_acc = self.lookup.get_test_errors(num_epochs)[target_lookup_index]
+        test_err = self.lookup.get_test_errors(num_epochs)[target_lookup_index]
         elapsed_time = self.lookup.get_elapsed_times(num_epochs)[target_lookup_index]
         hpv_dict = {}
         hpv_list = hpv.tolist()
         for i in range(len(hpv_list)):
             val = hpv_list[i]
             key = param_orders[i]
-            hpv_dict[key] = val
+            if i == 0 or i == 1 or i == 2 or i == 3 or i == 4 or i == 5:
+                hpv_dict[key] = int(val)
+            else:
+                hpv_dict[key] = float(val)
 
         #import IPython; IPython.embed()
         return ({
-            'loss': 1-test_acc, # remember: HpBandSter always minimizes!
+            'loss': test_err, # remember: HpBandSter always minimizes!
             'info': {
-                        'test accuracy': test_acc,
+                        'test accuracy': 1.0 - test_err,
                         'elapsed time' : elapsed_time,
 						'hyperparams' : hpv_dict,
+                        'lookup index' : int(target_lookup_index)
                     }
         })
 

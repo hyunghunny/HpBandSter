@@ -26,13 +26,13 @@ logging.basicConfig(level=logging.DEBUG)
 parser = argparse.ArgumentParser(description='Example 5 - CNN on MNIST')
 parser.add_argument('--min_budget',   type=float, help='Minimum number of epochs for training.',    default=1)
 parser.add_argument('--max_budget',   type=float, help='Maximum number of epochs for training.',    default=15)
-parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=10)
+parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=100)
 parser.add_argument('--worker', help='Flag to turn this into a worker process', action='store_true')
 parser.add_argument('--run_id', type=str, help='A unique run id for this optimization run. An easy option is to use the job id of the clusters scheduler.')
 parser.add_argument('--nic_name',type=str, help='Which network interface to use for communication.', default='lo')
-parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='.')
-parser.add_argument('--backend',help='Toggles which worker is used. Choose between a pytorch and a keras implementation.', choices=['pytorch', 'keras'], default='surrogate')
-
+parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='./data2-100-0-0')
+parser.add_argument('--backend',help='Toggles which worker is used. Choose between a pytorch and a keras implementation.', choices=['pytorch', 'keras', 'surrogate'], default='keras')
+parser.add_argument('--gpu_id',   type=float, help='GPU machine id for training.',    default=0)
 args=parser.parse_args()
 
 
@@ -70,7 +70,7 @@ NS = hpns.NameServer(run_id=args.run_id, host=host, port=0, working_directory=ar
 ns_host, ns_port = NS.start()
 
 # Start local worker
-w = worker(run_id=args.run_id, host=host, nameserver=ns_host, nameserver_port=ns_port, timeout=120)
+w = worker(run_id=args.run_id, host=host, nameserver=ns_host, nameserver_port=ns_port, timeout=120, gpu_id=args.gpu_id)
 w.run(background=True)
 
 # Run an optimizer
