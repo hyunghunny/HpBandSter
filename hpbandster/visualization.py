@@ -87,7 +87,7 @@ def finished_runs_over_time(runs, show=False):
 	
 	if show:
 		plt.show()
-	
+	return(fig,ax)
 
 def performance_histogram_model_vs_random(runs, id2conf, show=False):
 	model_based_runs = list(filter(lambda r: id2conf[r.config_id]['config_info']['model_based_pick'], runs))
@@ -196,6 +196,7 @@ def correlation_across_budgets(results_object, show=False):
 
 	if show:
 		plt.show()
+	return(fig,ax)
 
 
 
@@ -208,6 +209,8 @@ def losses_over_time(runs, get_loss_from_run_fn = lambda r: r.loss, cmap = plt.g
 		data[b] = []
 
 	for r in runs:
+		if r.loss is None:
+			continue
 		b = r.budget
 		t = r.time_stamps['finished']
 		l = get_loss_from_run_fn(r)
@@ -231,7 +234,7 @@ def losses_over_time(runs, get_loss_from_run_fn = lambda r: r.loss, cmap = plt.g
 	ax.legend()
 	if show:
 		plt.show()
-
+	return(fig,ax)
 
 
 

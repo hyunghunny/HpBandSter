@@ -8,7 +8,6 @@ import pdb
 from hpbandster.core.dispatcher import Job
 
 
-
 class Datum(object):
 	def __init__(self, config, config_info, results=None, time_stamps=None, exceptions=None, status='QUEUED', budget=0):
 		self.config		= config
@@ -70,8 +69,6 @@ class BaseIteration(object):
 		self.logger=logger if not logger is None else logging.getLogger('hpbandster')
 		self.result_logger = result_logger
 
-
-
 	def add_configuration(self, config = None, config_info={}):
 		"""
 		function to add a new configuration to the current iteration
@@ -84,7 +81,7 @@ class BaseIteration(object):
 		config_info: dict
 			Some information about the configuration that will be stored in the results
 		"""
-
+		
 		if config is None:
 			config, config_info = self.config_sampler(self.budgets[self.stage])
 		
@@ -164,7 +161,7 @@ class BaseIteration(object):
 				assert v.budget == self.budgets[self.stage], 'Configuration budget does not align with current stage!'
 				v.status = 'RUNNING'
 				self.num_running += 1
-				return(k, v.config, v.budget, v.config_info) ##origin : (k, v.config, v.budget)
+				return(k, v.config, v.budget)
 
 		# check if there are still slots to fill in the current stage and return that
 		if (self.actual_num_configs[self.stage] < self.num_configs[self.stage]):

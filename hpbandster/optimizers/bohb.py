@@ -6,6 +6,7 @@ import logging
 
 import numpy as np
 
+
 import ConfigSpace as CS
 
 from hpbandster.core.master import Master
@@ -78,6 +79,8 @@ class BOHB(Master):
 		# TODO: Propper check for ConfigSpace object!
 		if configspace is None:
 			raise ValueError("You have to provide a valid CofigSpace object")
+
+
 
 		cg = CG_BOHB( configspace = configspace,
 					min_points_in_model = min_points_in_model,
