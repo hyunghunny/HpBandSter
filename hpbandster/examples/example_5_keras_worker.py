@@ -78,7 +78,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class KerasWorker(Worker):
-	def __init__(self, N_train=8192, N_valid=1024, gpu_id=0, **kwargs):
+	def __init__(self, N_train=55000, N_valid=5000, gpu_id=0, **kwargs):
 		super().__init__(**kwargs)
 
 		self.batch_size = 64
