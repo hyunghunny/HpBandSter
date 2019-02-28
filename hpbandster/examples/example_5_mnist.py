@@ -32,7 +32,7 @@ parser.add_argument('--run_id', type=str, help='A unique run id for this optimiz
 parser.add_argument('--nic_name',type=str, help='Which network interface to use for communication.', default='lo')
 parser.add_argument('--shared_directory',type=str, help='A directory that is accessible for all processes, e.g. a NFS share.', default='.')
 parser.add_argument('--backend',help='Toggles which worker is used. Choose between a pytorch and a keras implementation.', choices=['pytorch', 'keras'], default='keras')
-
+parser.add_argument('--gpu_id', type=float, help='GPU machine id for training.', default=0)
 args=parser.parse_args()
 
 
@@ -68,7 +68,7 @@ NS = hpns.NameServer(run_id=args.run_id, host=host, port=0, working_directory=ar
 ns_host, ns_port = NS.start()
 
 # Start local worker
-w = worker(run_id=args.run_id, host=host, nameserver=ns_host, nameserver_port=ns_port, timeout=120)
+w = worker(run_id=args.run_id, host=host, nameserver=ns_host, nameserver_port=ns_port, timeout=120, gpu_id=args.gpu_id)
 w.run(background=True)
 
 # Run an optimizer
